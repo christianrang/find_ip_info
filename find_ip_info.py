@@ -2,6 +2,8 @@ import requests
 import argparse
 import pprint
 from netaddr import IPNetwork
+import sys
+import time
 """
     Author:     Christian Rang
     Date:       05/20/20
@@ -18,7 +20,7 @@ from netaddr import IPNetwork
 # This can be hardcoded to contain list of ips instead of using a dynamic ingest
 # ip_list = []
 
-def get_ip_info(ip, url='http://ip-api.com/json'):
+def get_ip_info(ip, url='http://ip-api.com/csv'):
     """
     docs for ip-api.com can be found at https://ip-api.com/docs 
     :param      str ip:     target ip to get info for
@@ -30,15 +32,41 @@ def get_ip_info(ip, url='http://ip-api.com/json'):
     fields = '33292287'     # Found at https://ip-api.com/docs/api:json under Returned data - fields it will generate a number for you
     url = url + '/' + ip + '?' + 'fields=' + fields
 
-    # Sending request
-    response = requests.post(url)
+    # Allows for retrying of a query if an error is experienced
+    while True:
 
-    # Deciding how to handle response based on return code
-    if response.status_code == requests.codes.ok:
-        return response.text
-    else:
-        response.raise_for_status()
-        return response.status_code
+        # Sending request
+        response = requests.post(url)
+
+        # Deciding how to handle response based on return code
+        try:
+            if response.status_code == requests.codes.ok:
+                return response.text
+            else:
+                response.raise_for_status()
+                return response.status_code
+        except:
+            wait(seconds=60)
+
+def wait(seconds=60, verbose=True):
+    """
+    Waits for the api to become queryable again
+    """
+    def outloud(remaining):
+        sys.stdout.write("\r")
+        sys.stdout.write("Sleeping for {:2d} seconds to give the API a break".format(remaining))
+        sys.stdout.flush()
+
+    def clean_sysout():
+        sys.stdout.write("\r")
+        sys.stdout.write("                                                                               ")
+        sys.stdout.write("\r")
+        sys.stdout.flush()
+    
+    for remaining in range(seconds, 0, -1):
+        if verbose==True: outloud(remaining)
+        time.sleep(1)
+        if verbose==True: clean_sysout()
 
 if __name__ == '__main__':
     # Builds arg parser
@@ -88,4 +116,4 @@ if __name__ == '__main__':
         # print(ip,':')
         # pretty = pprint.PrettyPrinter(indent=2)
         # pretty.pprint(get_ip_info(**get_ip_info_params))
-        print(ip+','+get_ip_info(**get_ip_info_params))
+        print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
