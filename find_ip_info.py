@@ -35,7 +35,7 @@ def get_ip_info(ip, url='http://ip-api.com/json'):
 
     # Deciding how to handle response based on return code
     if response.status_code == requests.codes.ok:
-        return response.json()
+        return response.text
     else:
         response.raise_for_status()
         return response.status_code
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         get_ip_info_params['ip']= ip
 
         # Prints output
-        print(ip,':')
-        pretty = pprint.PrettyPrinter(indent=2)
-        pretty.pprint(get_ip_info(**get_ip_info_params))
-        print()
+        # print(ip,':')
+        # pretty = pprint.PrettyPrinter(indent=2)
+        # pretty.pprint(get_ip_info(**get_ip_info_params))
+        print(ip+','+get_ip_info(**get_ip_info_params))
