@@ -2,7 +2,7 @@ import requests
 import argparse
 import pprint
 from netaddr import IPNetwork
-import sys
+import sys, os
 import time
 """
     Author:     Christian Rang
@@ -77,6 +77,24 @@ def wait(seconds=60, verbose=True):
         time.sleep(1)
         if verbose==True: clean_sysout()
 
+def write(line, file_name):
+    with open(file_name, 'a') as file:
+        file.write(line)
+
+def output_file_exist_check(file_name):
+    overwrite_check = ''
+    if os.path.isfile(file_name):
+        while overwrite_check.lower() not in ['y', 'n']:
+            overwrite_check = input('File "{}" already exists would you like to overwrite it? (y/n): '.format(file_name))
+    else:
+        return True
+    if overwrite_check.lower() == 'y':
+        open(file_name, "w")
+        return True
+    else:
+        print('Exiting...')
+        exit()
+
 if __name__ == '__main__':
     # Builds arg parser
     parser = argparse.ArgumentParser(description='Find IP info')
@@ -85,6 +103,7 @@ if __name__ == '__main__':
     parser.add_argument('-ip', type=str, nargs=1, dest='ip', help='target ip address')
     parser.add_argument('-i', '--ignore', dest='ignore', action='store_true', help='run the default ip list hardcoded in the script')
     parser.add_argument('-t', '--output_type', dest='file_type', help='output type of the query. Default=csv', default='csv')
+    parser.add_argument('-o', '--output_file', dest='file_name', help='output file name. File type will be decided by -t/--output_type')
     args = parser.parse_args()
 
     # Stores parameters to be used in get_ip_info()
@@ -108,27 +127,31 @@ if __name__ == '__main__':
     if args.url:
         get_ip_info_params['url']= args.url[0]
 
-    for ip in ip_list:
-        if '/' in ip:
-            ip_list.remove(ip)
-            print('building ip list based off network... this may take a while...')
-            # builds ip list based of CIDR
-            for networked_ip in IPNetwork(ip):
-                ip_list.append(str(networked_ip))
-        # Ensures there are no newlines from when the file was imported
-        if '\n' in ip:
-            ip = ip.split('\n')[0]
 
-        # adds the ip to the params replacing the current ip if necessary
-        get_ip_info_params['ip']= ip
-        if args.file_type: get_ip_info_params['file_type']= args.file_type
+    if output_file_exist_check(args.file_name): 
+        for ip in ip_list:
+            if '/' in ip:
+                ip_list.remove(ip)
+                print('building ip list based off network... this may take a while...')
+                # builds ip list based of CIDR
+                for networked_ip in IPNetwork(ip):
+                    ip_list.append(str(networked_ip))
+            # Ensures there are no newlines from when the file was imported
+            if '\n' in ip:
+                ip = ip.split('\n')[0]
 
-        output = get_ip_info(**get_ip_info_params)
-        # Prints output
-        if args.file_type=='json':
-            print(ip,':')
-            pretty = pprint.PrettyPrinter(indent=2)
-            pretty.pprint(output)
+            # adds the ip to the params replacing the current ip if necessary
+            get_ip_info_params['ip']= ip
+            if args.file_type: get_ip_info_params['file_type']= args.file_type
 
-        if args.file_type=='csv':
-            print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
+            output = get_ip_info(**get_ip_info_params)
+            if args.file_name: write(output, args.file_name)
+
+            # Prints output
+            if args.file_type=='json':
+                print(ip,':')
+                pretty = pprint.PrettyPrinter(indent=2)
+                pretty.pprint(output)
+
+            if args.file_type=='csv':
+                print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
