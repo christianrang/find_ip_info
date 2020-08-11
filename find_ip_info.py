@@ -2,7 +2,8 @@ import requests
 import argparse
 import pprint
 from netaddr import IPNetwork
-import sys, os
+import sys 
+import os
 import time
 """
     Author:     Christian Rang
@@ -127,31 +128,31 @@ if __name__ == '__main__':
     if args.url:
         get_ip_info_params['url']= args.url[0]
 
+    if args.file_name: output_file_exist_check(args.file_name)
 
-    if output_file_exist_check(args.file_name): 
-        for ip in ip_list:
-            if '/' in ip:
-                ip_list.remove(ip)
-                print('building ip list based off network... this may take a while...')
-                # builds ip list based of CIDR
-                for networked_ip in IPNetwork(ip):
-                    ip_list.append(str(networked_ip))
-            # Ensures there are no newlines from when the file was imported
-            if '\n' in ip:
-                ip = ip.split('\n')[0]
+    for ip in ip_list:
+        if '/' in ip:
+            ip_list.remove(ip)
+            print('building ip list based off network... this may take a while...')
+            # builds ip list based of CIDR
+            for networked_ip in IPNetwork(ip):
+                ip_list.append(str(networked_ip))
+        # Ensures there are no newlines from when the file was imported
+        if '\n' in ip:
+            ip = ip.split('\n')[0]
 
-            # adds the ip to the params replacing the current ip if necessary
-            get_ip_info_params['ip']= ip
-            if args.file_type: get_ip_info_params['file_type']= args.file_type
+        # adds the ip to the params replacing the current ip if necessary
+        get_ip_info_params['ip']= ip
+        if args.file_type: get_ip_info_params['file_type']= args.file_type
 
-            output = get_ip_info(**get_ip_info_params)
-            if args.file_name: write(output, args.file_name)
+        output = get_ip_info(**get_ip_info_params)
+        if args.file_name: write(output, args.file_name)
 
-            # Prints output
-            if args.file_type=='json':
-                print(ip,':')
-                pretty = pprint.PrettyPrinter(indent=2)
-                pretty.pprint(output)
+        # Prints output
+        if args.file_type=='json':
+            print(ip,':')
+            pretty = pprint.PrettyPrinter(indent=2)
+            pretty.pprint(output)
 
-            if args.file_type=='csv':
-                print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
+        if args.file_type=='csv':
+            print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
