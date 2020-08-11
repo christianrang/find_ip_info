@@ -20,7 +20,9 @@ import time
 # This can be hardcoded to contain list of ips instead of using a dynamic ingest
 # ip_list = []
 
-def get_ip_info(ip, url='http://ip-api.com/csv'):
+FILE_TYPES=['json','csv']
+
+def get_ip_info(ip, url='http://ip-api.com/', file_type='csv'):
     """
     docs for ip-api.com can be found at https://ip-api.com/docs 
     :param      str ip:     target ip to get info for
@@ -28,9 +30,10 @@ def get_ip_info(ip, url='http://ip-api.com/csv'):
     :return:                ip info / status code
     :raises:    http error
     """
+    if not file_type in FILE_TYPES: raise ValueError("Please use one of the available file types: {}".format(FILE_TYPES))
     # Building the url
     fields = '33292287'     # Found at https://ip-api.com/docs/api:json under Returned data - fields it will generate a number for you
-    url = url + '/' + ip + '?' + 'fields=' + fields
+    url = url + file_type + '/' + ip + '?' + 'fields=' + fields
 
     # Allows for retrying of a query if an error is experienced
     while True:
@@ -51,6 +54,9 @@ def get_ip_info(ip, url='http://ip-api.com/csv'):
 def wait(seconds=60, verbose=True):
     """
     Waits for the api to become queryable again
+
+    :param      int     seconds:    number of seconds to wait
+    :param      bool    verbose:    defines will the user be notified of wait and remaining wait time
     """
     def outloud(remaining):
         sys.stdout.write("\r")
@@ -58,6 +64,9 @@ def wait(seconds=60, verbose=True):
         sys.stdout.flush()
 
     def clean_sysout():
+        """
+        Cleans sys out before continuing
+        """
         sys.stdout.write("\r")
         sys.stdout.write("                                                                               ")
         sys.stdout.write("\r")
@@ -75,6 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--url',nargs=1, type=str, dest='url')
     parser.add_argument('-ip', type=str, nargs=1, dest='ip', help='target ip address')
     parser.add_argument('-i', '--ignore', dest='ignore', action='store_true', help='run the default ip list hardcoded in the script')
+    parser.add_argument('-t', '--output_type', dest='file_type', help='output type of the query. Default=csv', default='csv')
     args = parser.parse_args()
 
     # Stores parameters to be used in get_ip_info()
@@ -111,9 +121,14 @@ if __name__ == '__main__':
 
         # adds the ip to the params replacing the current ip if necessary
         get_ip_info_params['ip']= ip
+        if args.file_type: get_ip_info_params['file_type']= args.file_type
 
+        output = get_ip_info(**get_ip_info_params)
         # Prints output
-        # print(ip,':')
-        # pretty = pprint.PrettyPrinter(indent=2)
-        # pretty.pprint(get_ip_info(**get_ip_info_params))
-        print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
+        if args.file_type=='json':
+            print(ip,':')
+            pretty = pprint.PrettyPrinter(indent=2)
+            pretty.pprint(output)
+
+        if args.file_type=='csv':
+            print(ip+','+get_ip_info(**get_ip_info_params).strip('\n'))
