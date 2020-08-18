@@ -9,13 +9,7 @@ import time
     Author:     Christian Rang
     Date:       05/20/20
 
-    Script for finding information on an IP
-
-    requirements.txt
-        requests
-        argparse
-        pprint
-        netaddr
+    Script for finding information on an IP using the http://ip-api.com/ API
 """
 
 # This can be hardcoded to contain list of ips instead of using a dynamic ingest
