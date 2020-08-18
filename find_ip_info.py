@@ -15,7 +15,8 @@ import time
 # This can be hardcoded to contain list of ips instead of using a dynamic ingest
 # ip_list = []
 
-FILE_TYPES=['json','csv']
+# Configurations
+FILE_TYPES=('json','csv')
 
 def get_ip_info(ip, url='http://ip-api.com/', file_type='csv'):
     """
@@ -54,6 +55,9 @@ def wait(seconds=60, verbose=True):
     :param      bool    verbose:    defines will the user be notified of wait and remaining wait time
     """
     def outloud(remaining):
+        """
+        Verbose output for how long the API is waiting
+        """
         sys.stdout.write("\r")
         sys.stdout.write("Sleeping for {:2d} seconds to give the API a break".format(remaining))
         sys.stdout.flush()
@@ -77,6 +81,14 @@ def write(line, file_name):
         file.write(line)
 
 def output_file_exist_check(file_name):
+    """
+    Verifies if the output file already exists
+
+    Consider appending an incrementing number to the end of the file name
+
+    :param  str     file_name:  the output file_name
+    :return bool    True:
+    """
     overwrite_check = ''
     if os.path.isfile(file_name):
         while overwrite_check.lower() not in ['y', 'n']:
@@ -133,7 +145,7 @@ if __name__ == '__main__':
                 ip_list.append(str(networked_ip))
         # Ensures there are no newlines from when the file was imported
         if '\n' in ip:
-            ip = ip.split('\n')[0]
+            ip = ip.strip('\n')
 
         # adds the ip to the params replacing the current ip if necessary
         get_ip_info_params['ip']= ip
