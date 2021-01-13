@@ -15,7 +15,7 @@ import time
 # This can be hardcoded to contain list of ips instead of using a dynamic ingest
 # ip_list = []
 
-FILE_TYPES=['json','csv']
+FILE_TYPES=('json','csv')
 
 def get_ip_info(ip, url='http://ip-api.com/', file_type='csv'):
     """
